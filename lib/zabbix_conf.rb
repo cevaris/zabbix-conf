@@ -18,8 +18,8 @@ TYPE_SNMP  = 2
 TYPE_IPMI  = 3
 TYPE_JMX   = 4
 
-TRUE  = 1
-FALSE = 0
+YES = 1
+NO  = 0
 
 AGENT_PORT = 10050
 
@@ -34,8 +34,8 @@ end
 
 def config_agent(options={}, config={})
   server = config[:server]
-  client = config[:client]
-    
+  agent = config[:agent]
+
   server_url = "http://#{server['ip']}/zabbix/api_jsonrpc.php"
 
   zbx = Timeout::timeout(TIMEOUT) {
@@ -47,19 +47,19 @@ def config_agent(options={}, config={})
   }
 
   hostgroup = Timeout::timeout(TIMEOUT) {
-    zbx.hostgroups.get_or_create(:name => client['hostgroup'])
+    zbx.hostgroups.get_or_create(:name => agent['hostgroup'])
   }
 
   host = Timeout::timeout(TIMEOUT) {
     zbx.hosts.create_or_update(
-      :host => client['fqdn'],
+      :host => agent['fqdn'],
       :interfaces => [{
         :type  => TYPE_AGENT,
-        :main  => TRUE,
-        :ip    => client['ip'],
-        :dns   => client['fqdn'],
+        :main  => YES,
+        :ip    => agent['ip'],
+        :dns   => agent['fqdn'],
         :port  => AGENT_PORT,
-        :useip => TRUE 
+        :useip => YES 
       }],
       :groups => [:groupid => hostgroup]
     )
@@ -73,29 +73,36 @@ def execute(options={}, config={})
     puts "Executing #{options.inspect}"
 
     server = config[:server]
-    client = config[:client]
+    agent  = config[:agent]
 
-    if client.nil?
+    if !agent.empty? && !server.empty?
+      config_agent(options, config)
+    end
+    
+    if server
       config_server(options, config)
-    else
-      config_agent(options,  config)
-    end  
+    end
+
+    # if applications
+    # end
+
 end
 
-def validate_inifile(client={}, server={})
+def validate_inifile(agent={}, server={})
   errors = []
-  puts client.inspect
-  puts server.inspect
   
-  errors << 'Missing server fqdn' if server['fqdn'].nil?
-  errors << 'Missing server ip'   if server['ip'].nil?
-  errors << 'Missing server password'  if server['pass'].nil?
-  errors << 'Missing server username'  if server['user'].nil?
-
-  errors << 'Missing client fqdn' if client['fqdn'].nil?
-  errors << 'Missing client ip'   if client['ip'].nil?
-
-  return errors, {:client => client, :server => server}
+  unless server.empty?
+    errors << 'Missing server fqdn' if server['fqdn'].nil?
+    errors << 'Missing server ip'   if server['ip'].nil?
+    errors << 'Missing server password'  if server['pass'].nil?
+    errors << 'Missing server username'  if server['user'].nil?
+  end
+  unless agent.empty?
+    errors << 'Missing agent fqdn' if agent['fqdn'].nil?
+    errors << 'Missing agent ip'   if agent['ip'].nil?
+  end
+  
+  return errors, {:agent => agent, :server => server}
 end
 
 
@@ -115,7 +122,7 @@ def validate_args(optparse, options)
 
     # Validate ini file
     ini_data = IniFile.load(options[:config_path])
-    errors, args = validate_inifile(ini_data['client'],ini_data['server'])
+    errors, args = validate_inifile(ini_data['agent'],ini_data['server'])
     raise "Configuration Error\n #{errors.join("\n")}" unless errors.empty?
 
     # All is valid, return arguments
