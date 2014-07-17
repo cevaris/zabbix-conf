@@ -33,8 +33,8 @@ def zab_client(config={})
 
   Timeout::timeout(TIMEOUT) {
     ZabbixApi.connect( 
-      :url => server_url,
-      :user => server['user'],
+      :url      => server_url,
+      :user     => server['user'],
       :password => server['pass']
     )
   }
@@ -66,7 +66,7 @@ def add_tempalte_to_host(client, config={})
 
   Timeout::timeout(TIMEOUT) {
     client.templates.mass_add(
-      :hosts_id => [client.hosts.get_id(:host => agent['fqdn'])],
+      :hosts_id     => [client.hosts.get_id(:host => agent['fqdn'])],
       :templates_id => template_ids
     )
   }
@@ -109,21 +109,21 @@ def config_agent(options={}, config={})
   host = create_host(zbx, config)
   add_tempalte_to_host(zbx, config)
   
-  puts host.inspect
+  puts 'Done configuring agent'
 end
 
 
 def execute(options={}, config={})
-    server = config[:server]
-    agent  = config[:agent]
+  server = config[:server]
+  agent  = config[:agent]
 
-    if !agent.empty? && !server.empty?
-      config_agent(options, config)
-    end
-    
-    if server
-      config_server(options, config)
-    end
+  if !agent.empty? && !server.empty?
+    config_agent(options, config)
+  end
+  
+  if server
+    config_server(options, config)
+  end
 
 end
 
