@@ -13,11 +13,59 @@ STDOUT.sync = true
 
 TIMEOUT = 10
 
+TYPE_AGENT = 1
+TYPE_SNMP  = 2
+TYPE_IPMI  = 3
+TYPE_JMX   = 4
+
+TRUE  = 1
+FALSE = 0
+
+AGENT_PORT = 10050
 
 
 
 def parse_ini
     # http://stackoverflow.com/questions/607640/how-to-read-an-ini-file-in-ruby
+end
+
+def config_server(options={}, config={})
+end
+
+def config_agent(options={}, config={})
+  server = config[:server]
+  client = config[:client]
+    
+  server_url = "http://#{server['ip']}/zabbix/api_jsonrpc.php"
+
+  zbx = Timeout::timeout(TIMEOUT) {
+    ZabbixApi.connect( 
+      :url => server_url,
+      :user => server['user'],
+      :password => server['pass']
+    )
+  }
+
+  hostgroup = Timeout::timeout(TIMEOUT) {
+    zbx.hostgroups.get_or_create(:name => client['hostgroup'])
+  }
+
+  host = Timeout::timeout(TIMEOUT) {
+    zbx.hosts.create_or_update(
+      :host => client['fqdn'],
+      :interfaces => [{
+        :type  => TYPE_AGENT,
+        :main  => TRUE,
+        :ip    => client['ip'],
+        :dns   => client['fqdn'],
+        :port  => AGENT_PORT,
+        :useip => TRUE 
+      }],
+      :groups => [:groupid => hostgroup]
+    )
+  }
+  
+  puts host.inspect
 end
 
 
@@ -26,37 +74,12 @@ def execute(options={}, config={})
 
     server = config[:server]
     client = config[:client]
-    server_url = "http://#{server['ip']}/zabbix/api_jsonrpc.php"
 
-    zbx = Timeout::timeout(TIMEOUT) {
-      ZabbixApi.connect( 
-        :url => server_url,
-        :user => server['user'],
-        :password => server['pass']
-      )
-    }
-
-    hostgroup = Timeout::timeout(TIMEOUT) {
-      zbx.hostgroups.get_or_create(:name => client['hostgroup'])
-    }
-
-    host = Timeout::timeout(TIMEOUT) {
-      zbx.hosts.create_or_update(
-        :host => client['fqdn'],
-        :interfaces => [{
-          :type => 1,
-          :main => 1,
-          :ip => client['ip'],
-          :dns => client['fqdn'],
-          :port => 10050,
-          :useip => 1   
-        }],
-        :groups => [:groupid => hostgroup]
-      )
-    }
-    
-    puts host.inspect
-  
+    if client.nil?
+      config_server(options, config)
+    else
+      config_agent(options,  config)
+    end  
 end
 
 def validate_inifile(client={}, server={})
