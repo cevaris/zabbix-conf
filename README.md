@@ -20,5 +20,4 @@ hostgroup = testGroup
 #### Execute configuration
 ```
 /usr/local/bin/zabconf /etc/zabbix/zabcon.ini
-....
 ```
