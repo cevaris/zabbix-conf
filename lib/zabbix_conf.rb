@@ -39,6 +39,23 @@ def execute(options={}, config={})
     hostgroup = Timeout::timeout(TIMEOUT) {
       zbx.hostgroups.get_or_create(:name => client['hostgroup'])
     }
+
+    host = Timeout::timeout(TIMEOUT) {
+      zbx.hosts.create_or_update(
+        :host => client['fqdn'],
+        :interfaces => [{
+          :type => 1,
+          :main => 1,
+          :ip => client['ip'],
+          :dns => client['fqdn'],
+          :port => 10050,
+          :useip => 1   
+        }],
+        :groups => [:groupid => hostgroup]
+      )
+    }
+    
+    puts host.inspect
   
 end
 
@@ -47,13 +64,13 @@ def validate_inifile(client={}, server={})
   puts client.inspect
   puts server.inspect
   
-  errors << 'Missing server dns' if server['dns'].nil?
-  errors << 'Missing server ip'  if server['ip'].nil?
+  errors << 'Missing server fqdn' if server['fqdn'].nil?
+  errors << 'Missing server ip'   if server['ip'].nil?
   errors << 'Missing server password'  if server['pass'].nil?
   errors << 'Missing server username'  if server['user'].nil?
 
-  errors << 'Missing client dns' if client['dns'].nil?
-  errors << 'Missing client ip'  if client['ip'].nil?
+  errors << 'Missing client fqdn' if client['fqdn'].nil?
+  errors << 'Missing client ip'   if client['ip'].nil?
 
   return errors, {:client => client, :server => server}
 end
