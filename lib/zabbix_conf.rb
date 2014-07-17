@@ -23,35 +23,63 @@ NO  = 0
 
 AGENT_PORT = 10050
 
+TEMPLATE_LINUX = 10001
 
 
-def parse_ini
-    # http://stackoverflow.com/questions/607640/how-to-read-an-ini-file-in-ruby
-end
-
-def config_server(options={}, config={})
-end
-
-def config_agent(options={}, config={})
-  server = config[:server]
-  agent = config[:agent]
-
+def zab_client(config={})
+  server     = config[:server]
+  agent      = config[:agent]
   server_url = "http://#{server['ip']}/zabbix/api_jsonrpc.php"
 
-  zbx = Timeout::timeout(TIMEOUT) {
+  Timeout::timeout(TIMEOUT) {
     ZabbixApi.connect( 
       :url => server_url,
       :user => server['user'],
       :password => server['pass']
     )
   }
+end
 
-  hostgroup = Timeout::timeout(TIMEOUT) {
-    zbx.hostgroups.get_or_create(:name => agent['hostgroup'])
+def get_template(client, config={})
+  server = config[:server]
+  agent  = config[:agent]
+
+  Timeout::timeout(TIMEOUT) {
+    client.templates.get_id(:host => agent['template'])
   }
+end
 
-  host = Timeout::timeout(TIMEOUT) {
-    zbx.hosts.create_or_update(
+def create_hostgroup(client, config={})
+  server = config[:server]
+  agent  = config[:agent]
+  
+  Timeout::timeout(TIMEOUT) {
+    client.hostgroups.get_or_create(:name => agent['hostgroup'])
+  }
+end
+
+def add_tempalte_to_host(client, config={})
+  server = config[:server]
+  agent  = config[:agent]
+
+  template_ids = [get_template(client, config)]
+
+  Timeout::timeout(TIMEOUT) {
+    client.templates.mass_add(
+      :hosts_id => [client.hosts.get_id(:host => agent['fqdn'])],
+      :templates_id => template_ids
+    )
+  }
+end
+
+def create_host(client, config={})
+  server = config[:server]
+  agent  = config[:agent]
+
+  hostgroup = create_hostgroup(client, config)
+
+  Timeout::timeout(TIMEOUT) {
+    client.hosts.create_or_update(
       :host => agent['fqdn'],
       :interfaces => [{
         :type  => TYPE_AGENT,
@@ -64,14 +92,28 @@ def config_agent(options={}, config={})
       :groups => [:groupid => hostgroup]
     )
   }
+end
+
+
+def config_server(options={}, config={})
+  server = config[:server]
+  agent  = config[:agent]
+
+end
+
+def config_agent(options={}, config={})
+  server = config[:server]
+  agent = config[:agent]
+
+  zbx = zab_client(config)
+  host = create_host(zbx, config)
+  add_tempalte_to_host(zbx, config)
   
   puts host.inspect
 end
 
 
 def execute(options={}, config={})
-    puts "Executing #{options.inspect}"
-
     server = config[:server]
     agent  = config[:agent]
 
@@ -82,9 +124,6 @@ def execute(options={}, config={})
     if server
       config_server(options, config)
     end
-
-    # if applications
-    # end
 
 end
 
