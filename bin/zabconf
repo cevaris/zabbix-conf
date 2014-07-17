@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+require 'rubygems'
+require 'inifile'
+require 'optparse'
+
 require 'zabbix_conf'
 
 # sync global stdout
@@ -9,7 +13,7 @@ def execute(options={}, config={})
   server = config[:server]
   agent  = config[:agent]
 
-  zabconf = ZabConf::Configure.new
+  zabconf = ZabbixConf::Configure.new
 
   if !agent.empty? && !server.empty?
     zabconf.config_agent(options, config)
