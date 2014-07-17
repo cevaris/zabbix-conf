@@ -1,5 +1,4 @@
-# zabbix-conf
-===========
+# Zabbix Configuration
 
 ## File based configuration for Zabbix
 
@@ -22,3 +21,7 @@ template  = Template OS Linux
 ```
 zabconf -c /etc/zabbix/agent.ini
 ```
+
+#### Required Gems
+- zabbixapi
+- inifile
