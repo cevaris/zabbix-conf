@@ -6,11 +6,11 @@ require 'zabbix_conf/version'
 Gem::Specification.new do |spec|
   spec.name          = "zabbix_conf"
   spec.version       = ZabbixConf::VERSION
-  spec.authors       = ["Cevaris"]
+  spec.authors       = ["cevaris"]
   spec.email         = ["cevaris@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+  spec.summary       = %q{File based configuration for Zabbix.}
+  spec.description   = %q{Ini configuration files are parsed to configure a Zabbix server via the zabbixapi ruby gem.}
+  spec.homepage      = "https://github.com/cevaris/zabbix-conf/"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
