@@ -5,20 +5,20 @@
 
 #### Example configuration file
 ```
-[host]
-ip=192.168.10.60
-dns=server.hostname.example.com
+[server]
+ip   = 192.168.10.50
+fqdn = server.hostname.example.com
+pass = zabbix
+user = admin
 
 [client]
-dns=client.hostname.example.com
-ip=192.168.10.60
-port=10050
-useip=0
-hostgroup=testGroup
+fqdn      = client.hostname.example.com
+ip        = 192.168.10.60
+hostgroup = testGroup
 ```
 
-#### Upload configuration
+#### Execute configuration
 ```
-zabconf /path/to/config/file
+/usr/local/bin/zabconf /etc/zabbix/zabcon.ini
 ....
 ```
