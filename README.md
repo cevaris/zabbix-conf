@@ -6,18 +6,19 @@
 #### Example configuration file
 ```
 [server]
+fqdn = server.example.com
 ip   = 192.168.10.50
-fqdn = server.hostname.example.com
 pass = zabbix
 user = admin
 
-[client]
-fqdn      = client.hostname.example.com
+[agent]
+fqdn      = agent.example.com
 ip        = 192.168.10.60
-hostgroup = testGroup
+hostgroup = localGroup
+template  = Template OS Linux
 ```
 
-#### Execute configuration
+#### Execute Agent configuration
 ```
-zabconf /etc/zabbix/zabcon.ini
+zabconf -c /etc/zabbix/agent.ini
 ```
